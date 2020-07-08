@@ -15,54 +15,53 @@
 Add-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue
 
 # Global variables
-$name = $args[0]
-$period = $args[1]
-$copyjob = $null
-$job = $null
-$last = $null
+$Name = $args[0]
+$Period = $args[1]
+$CopyJob = $null
+$Job = $null
+$Last = $null
 
 # Pull Job from VBR
-$job = Get-VBRJob -Name $name
-$name = "'" + $name + "'"
+$Job = Get-VBRJob -Name $Name
+$Name = "'" + $Name + "'"
 
 # Check if this is a valid job, timeframe, or if there was any missing arguments
-if($job.IsContinuous -ne 'True' -or $period -eq $null)
-{
-	Write-Host "UNKNOWN! No backup copy job: $name, or no job/period specified."
+if ($Job.IsContinuous -ne 'True' -or $null -eq $Period) {
+	Write-Host "UNKNOWN! No backup copy job: $Name, or no job/period specified."
 	exit 3
 }
 
-$copyjob=(Get-VBRBackupSession | Where {$_.jobId -eq $job.Id.Guid} | Sort EndTimeUTC -Descending | Select -First $period)
-$status = ($copyjob.Result | select-object -first 1)
+$CopyJob = (Get-VBRBackupSession | Where-Object {$_.jobId -eq $Job.Id.Guid} | Sort-Object EndTimeUTC -Descending | Select-Object -First $Period)
+$status = ($CopyJob.Result | Select-Object -first 1)
 
-if($copyjob.IsWorking -eq "True" -or $status -eq "None" -or $job.IsContinuous -eq 'True'){
-	Write-Host "OK! Backup copy job: $name is currently in progress but has not completed."
+if ($CopyJob.IsWorking -eq "True" -or $status -eq "None" -or $Job.IsContinuous -eq 'True') {
+	Write-Host "OK! Backup copy job: $Name is currently in progress but has not completed."
 	exit 0
 }
-if ($status -ne "Success")
-{
-	Write-Host "CRITICAL! Something prevented the backup copy process of the job: $name."
+if ($status -ne "Success") {
+	Write-Host "CRITICAL! Something prevented the backup copy process of the job: $Name."
 	exit 2
 }
 
 # Function to run a check on the last run to see if it has been within the period provided
-function Last-Run {
-	$now = ((Get-Date).AddDays(-$period))
+function Get-LastRun {
+	$now = ((Get-Date).AddDays(-$Period))
 	$now = $now.ToString("yyyy-MM-dd")
-	$last = (($copyjob.EndTime) | select-object -first 1)
-	$last=$last.ToString("yyyy-MM-dd")
+	$Last = (($CopyJob.EndTime) | Select-Object -first 1)
+	$Last = $Last.ToString("yyyy-MM-dd")
 
-	if((Get-Date $now) -gt (Get-Date $last))
+	if((Get-Date $now) -gt (Get-Date $Last))
 	{
-		Write-Host "CRITICAL! Last run of backup copy job: $name more than $period days ago."
+		Write-Host "CRITICAL! Last run of backup copy job: $Name more than $Period days ago."
 		exit 2
 	} 
 	else
 	{
-		Write-Host "OK! Backup copy process of job $name completed successfully."
+		Write-Host "OK! Backup copy process of job $Name completed successfully."
 		exit 0
 	}
-	Write-Host "WARNING! Backup copy job $name hasn't fully succeed in the last $period days."
+	Write-Host "WARNING! Backup copy job $Name hasn't fully succeed in the last $Period days."
 	exit 1
 }
-Last-Run
+
+Get-LastRun
