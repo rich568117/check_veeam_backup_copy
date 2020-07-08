@@ -21,7 +21,7 @@ Note that timeout has been changed to 60 seconds with -t60 to accomodate the bac
 define host {
 	host_name            <YOUR HOSTNAME>
 	alias                Check status of Veeam Backup
-	address              <IP address or hostname>   #not actually used, but I enter the hostname/IP for uniformity
+	address              <IP address or hostname>   
 	check_command        check_veeam_backup_copy!<NAME OF JOB>!<NUMBER OF DAYS TO CHECK>!-t 60
 	use                  generic-host
 	register             1
