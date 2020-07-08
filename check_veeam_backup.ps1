@@ -30,7 +30,8 @@ if ($job -eq $null -or $period -eq $null)
 # Get the result of the last job and exit if failed or anything other than success.
 $status = $job.GetLastResult()
 
-if($($job.findlastsession()).State -eq "Working"){
+if($($job.findlastsession()).State -eq "Working")
+{
 	Write-Host "OK! Backup or Replication Job: $name is currently in progress."
 	exit 0
 }
@@ -45,7 +46,7 @@ if ($status -ne "Success")
 	exit 1
 }
 	
-# Check the last run of this backup copy job.
+# Pull the last run of this backup copy job and compare to the period provided.
 $now = (Get-Date).AddDays(-$period)
 $now = $now.ToString("yyyy-MM-dd")
 $last = $job.GetScheduleOptions()
@@ -53,8 +54,6 @@ $last = $last -replace '.*Latest run time: \[', ''
 $last = $last -replace '\], Next run time: .*', ''
 $last = $last.split(' ')[0]
 
-#changed by DY on 11/04/2014 based on comment from cmot-weasel at http://exchange.nagios.org/directory/Plugins/Backup-and-Recovery/Others/check_veeam_backups/details
-#if ($now -gt $last)
 if((Get-Date $now) -gt (Get-Date $last))
 {
 	Write-Host "CRITICAL! Last run of job: $name more than $period days ago."
